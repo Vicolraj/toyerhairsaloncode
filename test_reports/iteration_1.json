@@ -1,0 +1,50 @@
+{
+  "summary": "Backend + Frontend testing for Toyer Hair salon app. 25/25 backend API tests pass. Booking, cancel, admin, cart, Stripe checkout, and protected routes work correctly. One CRITICAL frontend UX bug found: products on /shop page stay at opacity 0 (invisible) due to framer-motion `whileInView` inside StaggerGroup not firing under Lenis smooth-scroll.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Shop.jsx (StaggerGroup / StaggerItem in Reveal.jsx)",
+        "issue": "All product cards on /shop remain at CSS opacity 0 (visually invisible) even though 8 products are in the DOM and API returned them successfully. The framer-motion whileInView + Lenis smoothWheel combination causes the IntersectionObserver-based animation not to trigger, so the `visible` variant is never applied. The shop looks like an empty page to real users, though clicks on invisible add buttons still register (verified: cart count increments).",
+        "selector": "[data-testid^='shop-product-'] (parent motion.div opacity=0)",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "URGENT: Fix Shop product visibility. Options: (a) Replace `StaggerGroup`/`StaggerItem` with a plain div (or Reveal without whileInView on the grid), (b) use framer-motion `useInView` hook with a manual ref that ties into the Lenis scroll container, or (c) initialize `visible` on mount for above-the-fold content. Also consider a `viewport={{ once: true, amount: 0.1 }}` config or animating via `animate` prop tied to a `useEffect` after data loads.",
+    "Optional: Consider that /shop hero uses <Reveal> which works because it's above-the-fold on first paint; StaggerGroup lower down fails to trigger. If the fix is limited to Shop, remove StaggerGroup wrapper there."
+  ],
+  "critical_code_review_comments": [
+    "Reveal.jsx StaggerGroup relies on `whileInView` with Lenis smooth scroll (see App.js `<ReactLenis root ...>`). This combo is fragile; the IntersectionObserver may not fire because Lenis uses transforms. Consider `useInView({ root: window, once: true })` or eagerly setting `animate=\"visible\"` when data has loaded.",
+    "server.py: booking endpoint has a race-safe-ish 409 check but the read+insert is not atomic. For high concurrency add a unique compound index on (date, time, status='booked'). Not blocking for MVP.",
+    "server.py: `create_checkout` and `checkout_status` re-import emergentintegrations inside the function on every call. Move to module-level import for performance.",
+    "AdminDashboard.jsx polls /admin/appointments + /admin/stats every 20s but only unmounts interval — no visibilityChange gating. Minor perf issue.",
+    "Cancel endpoint returns 200 even if already cancelled (idempotent) — good, but revenue/stats do not decrement paid orders on refunds (out of scope).",
+    "No CORS_ORIGINS restriction in .env (currently `*`). Fine for dev but flag before prod.",
+    "Cart.jsx checkout: if backend errors, loading state is reset — good; but there's no retry UX. Minor."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new)",
+    "/app/test_reports/pytest/pytest_results.xml (new)"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "85% (all functional flows work; shop has critical visibility bug)"
+  },
+  "test_credentials": "admin@toyerhair.com / ToyerAdmin2026",
+  "seed_data_creation": "Backend seeds 6 services + 8 products + admin user on startup. Tests created a few TEST_-prefixed appointments (all cancelled in tests, so cleanup is automatic via cancel).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend fully passes (25/25). All frontend flows tested via Playwright: Booking flow (service select -> future date -> slot -> name/email -> confirm -> confirmation screen with cancel link) works; Cancel via /cancel/<token> works; Admin login redirects work, dashboard stats + tabs (booked/cancelled) work; Cart page inc/dec/remove/checkout -> Stripe redirect works. ONLY issue is Shop.jsx product opacity=0 due to framer-motion + Lenis IntersectionObserver breakdown. To retest fix: navigate /shop with 1920x1080 viewport, scroll to product grid, verify at least one [data-testid^='shop-product-'] has parent motion.div opacity=1.",
+  "rca of the issue": "ROOT CAUSE (shop invisibility): /app/frontend/src/App.js wraps the whole app in <ReactLenis root options={{smoothWheel:true}}>. Lenis translates the scroll container via CSS transforms so the actual document scroll position stays the same. framer-motion's whileInView uses IntersectionObserver against the document viewport; because scroll offset never changes, the observer never sees the StaggerGroup enter the viewport. Result: `initial=\"hidden\"` (opacity 0) never transitions to `visible`. REPRO STEPS: (1) Open https://salon-scheduler-live.preview.emergentagent.com/shop in Chromium 1920x1080; (2) Scroll down with mouse wheel; (3) Inspect any [data-testid^='shop-product-'] – parent motion.div computed opacity stays 0. FIX OPTIONS: (a) Remove StaggerGroup and use plain grid on Shop.jsx; (b) In Reveal.jsx replace `whileInView` with `animate=\"visible\"` triggered by state after mount / data load; (c) Import Lenis's scrollerProxy or use `useLenis` + `useEffect` to manually toggle variants; (d) simplest: change StaggerGroup to `initial={false}` and use `animate` unconditionally."
+}

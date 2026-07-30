@@ -1,0 +1,41 @@
+{
+  "summary": "Full backend + frontend regression for Toyer Hair full-business site (Phase 1). Backend: 47/47 pytest tests pass (public catalog, appointments incl. reschedule/deposit/cancel, customer auth + my/*, favorites, admin CRUD + role gating, Stripe CAD checkout with coupon, SEO robots/sitemap). Frontend: all critical flows verified end-to-end on the live preview URL — home, services (24 links), pricing (CAD), shop (16 products visible, filter Wigs -> 3 items, add-to-cart increments nav cart-count), product detail, cart -> Stripe redirect (CA$374.00), booking (service select -> future date -> live slot -> full form -> confirmation w/ manage-link), appointment page (pay-deposit Stripe redirect + cancel), customer register/login/logout/re-login + /account tabs, /account unauth redirect to /login, customer -> /admin redirect to /admin/login, admin login + all 7 tabs (overview, appointments, orders, products, customers, reviews, newsletter) with 8 stat cards, contact form, review submit, newsletter, FAQ (8 items), gallery (16 imgs + 11 filters), nav Services/Shop dropdowns, floating actions. Previous CRITICAL shop opacity=0 bug (iteration 1) is FIXED: Reveal.jsx now uses useInView + animate instead of whileInView.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/appointment/:token", "issues": ["Page title stays as global default 'Emergent | Fullstack App' — Appointment.jsx does not call useSEO(). Minor SEO gap; every other page sets a proper title."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL (SEO polish): add useSEO({title:'Manage Appointment', path:'/appointment'}) to /app/frontend/src/pages/Appointment.jsx so the browser tab and og:title reflect the page."
+  ],
+  "critical_code_review_comments": [
+    "server.py appointment insert is still not atomic — read+write race under high concurrency. Add unique compound index on (date, time) filtered by status='booked' before prod launch (Mongo partial index).",
+    "server.py: create_checkout re-instantiates StripeCheckout on every call — fine but consider caching the client (module-level) for perf.",
+    "CORS_ORIGINS='*' in backend/.env with allow_credentials=True is technically invalid for prod (browsers reject credentialed CORS with *). Fine for preview; restrict origins before deploy.",
+    "seed_admin idempotency is good: startup updates password_hash if admin password changed. Verified by successful login with ToyerAdmin2026.",
+    "Reveal.jsx fix (useInView + animate) is correct and resolves the framer-motion + Lenis interaction bug from iteration 1.",
+    "Booking.jsx polls /availability every 15s while page open — acceptable; could pause when tab hidden (document.visibilityState).",
+    "server.py availability endpoint returns 10 slots (09:00..18:00 inclusive) matching BUSINESS_HOURS list — request statement said 9 slots (09-18) but implementation includes 18:00 as bookable which is fine and internally consistent."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (rewritten for new 24-service / 16-product schema; +22 new tests)",
+    "/app/test_reports/pytest/pytest_results.xml (regenerated)"
+  ],
+  "success_rate": {"backend": "100% (47/47)", "frontend": "100% of listed flows"},
+  "test_credentials": "Admin admin@toyerhair.com / ToyerAdmin2026 ; created runtime customers testcust+<random>@test.com / pass1234",
+  "seed_data_creation": "Backend startup seeds 24 services, 16 products, 3 promos, 16 gallery images, 4 reviews, and admin user. Tests created TEST_-prefixed appointments/reviews/newsletter/contact/products; test appointment cancelled and test product deleted, so no data pollution beyond a few pending TEST reviews and newsletter emails.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend URL: https://salon-scheduler-live.preview.emergentagent.com. Backend uses non-prefixed IDs now: services like 'box-braids','knotless-braids','starter-locs','wig-install','kids-braids'; products like 'afro-wig','hair-oil','shampoo-set'. 10 hourly slots 09:00-18:00. Stripe CAD confirmed (checkout page showed 'CA$'). Email sending is intentionally inactive (RESEND_API_KEY empty) — logs skip only, do NOT report as bug. Emergent LLM key not used here.  Frontend cart badge is [data-testid='cart-count']. Booking manage link [data-testid='manage-link']. Appointment page deposit btn [data-testid='pay-deposit']; cancel btn [data-testid='confirm-cancel-btn'] behind a show-cancel modal.",
+  "rca of the issue": "N/A — no bugs found. Previous iteration_1 shop opacity=0 issue verified FIXED (all 16 [data-testid^='shop-product-'] cards render with computed opacity 1)."
+}

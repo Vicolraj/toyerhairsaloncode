@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #FBF8F3;
+    color: #1A1712;
+}
+
+@layer base {
+    :root {
+        --background: 40 33% 97%;
+        --foreground: 34 20% 9%;
+        --card: 0 0% 100%;
+        --card-foreground: 34 20% 9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 34 20% 9%;
+        --primary: 36 48% 48%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 40 25% 94%;
+        --secondary-foreground: 34 20% 9%;
+        --muted: 40 20% 93%;
+        --muted-foreground: 34 8% 42%;
+        --accent: 36 48% 48%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 48%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 38 18% 88%;
+        --input: 38 18% 88%;
+        --ring: 36 48% 48%;
+        --radius: 0.75rem;
+    }
+}
+
+@layer base {
+    * { @apply border-border; }
+    body { @apply bg-background text-foreground; }
+}
+
+.font-heading { font-family: 'Fraunces', serif; }
+.font-body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+::selection { background: #B8873F; color: #fff; }
+html { scroll-behavior: smooth; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #F1ECE3; }
+::-webkit-scrollbar-thumb { background: #d8cbb4; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #B8873F; }
+
+.text-gold-gradient {
+    background: linear-gradient(120deg, #C79A63 0%, #B8873F 60%, #8A5A2E 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ---- Motion utilities ---- */
+.marquee-mask {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+    display: inline-flex;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee linear infinite;
+}
+.marquee-track.reverse { animation-direction: reverse; }
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+.card-lift { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
+.card-lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px -20px rgba(26,23,18,.35); }
+.hover-zoom { overflow: hidden; }
+.hover-zoom img { transition: transform .7s cubic-bezier(.16,1,.3,1); }
+.hover-zoom:hover img { transform: scale(1.06); }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.animate-floaty { animation: floaty 4s ease-in-out infinite; }
+@keyframes shine { to { background-position: 200% center; } }
+.shine-text {
+    background: linear-gradient(90deg, #B8873F 0%, #F0D9B0 45%, #B8873F 90%);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shine 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-track, .animate-floaty, .shine-text { animation: none !important; }
+    .reveal-init { opacity: 1 !important; transform: none !important; }
+}
+
+/* Global auto-reveal for text & images */
+.reveal-init {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+    will-change: opacity, transform;
+}
+.reveal-init.reveal-in { opacity: 1; transform: none; }
+img.reveal-init { transform: scale(1.02); }
+img.reveal-init.reveal-in { transform: scale(1); }

@@ -1,0 +1,146 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Luxury)",
+  "brand": {
+    "name": "Toyer Hair",
+    "subtitle": "Professional African Beauty Salon",
+    "tone": "Elegant, Immersive, Premium, Culturally Rich, Professional",
+    "design_philosophy": "Fusion of premium cinematic luxury and rich organic warmth. The experience should feel like walking into a high-end salon: dark, moody, warm lighting with stunning visual details."
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Cormorant Garamond",
+      "body": "Outfit",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl lg:text-7xl font-light tracking-tighter leading-none",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl font-light tracking-tight leading-tight",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight",
+      "h4": "text-lg sm:text-xl font-normal",
+      "body": "text-base leading-relaxed tracking-wide",
+      "label": "text-xs uppercase tracking-[0.2em] font-semibold"
+    },
+    "rules": [
+      "Headings must use Cormorant Garamond, tracking-tighter, leading-none.",
+      "Body text uses Outfit for modern, clean legibility.",
+      "Never use default 'Bold' for headings. Use font-light or font-medium for a high-fashion editorial look.",
+      "Overlines and small labels must be uppercase with wide tracking (tracking-[0.2em])."
+    ]
+  },
+  "colors": {
+    "background": "#120D0A",
+    "foreground": "#F8F5F1",
+    "surface": "#1F1611",
+    "surface_hover": "#2A1F18",
+    "primary": "#C79A63",
+    "primary_foreground": "#120D0A",
+    "secondary": "#33261D",
+    "secondary_foreground": "#F8F5F1",
+    "accent": "#8A5A44",
+    "accent_foreground": "#F8F5F1",
+    "border": "rgba(248, 245, 241, 0.08)",
+    "ring": "#C79A63",
+    "glass": "rgba(31, 22, 17, 0.6)",
+    "rules": [
+      "Use #120D0A as the main background. It is a deep espresso black, giving a rich, warm, luxurious feel.",
+      "Text should be #F8F5F1 (Warm Cream) to reduce eye strain compared to pure white.",
+      "Primary actions (Book Now, Add to Cart) use the Soft Amber Gold (#C79A63).",
+      "Use 1px borders (rgba(248, 245, 241, 0.08)) to define cards and surfaces instead of heavy drop shadows."
+    ]
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Generous. Use p-6, p-8, p-12, p-24.",
+    "section_padding": "py-24 md:py-32",
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "grids": {
+      "marketing": "Asymmetric Bento Grid (grid-cols-1 md:grid-cols-12 gap-8). Use col-span-8 and col-span-4 to create tension.",
+      "products": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8",
+      "scheduler": "grid-cols-1 lg:grid-cols-3 gap-12 (2 columns for calendar/time slots, 1 column for summary)"
+    },
+    "rules": [
+      "Never perfectly center everything. Use asymmetric alignments for visual interest.",
+      "Images should not exceed 80vh height on mobile to prevent blocking content.",
+      "Use massive negative space between distinct sections."
+    ]
+  },
+  "motion_and_interactions": {
+    "scroll": "MUST use Lenis for smooth momentum scrolling. This is critical for the 'immersive' requirement.",
+    "animations": {
+      "reveal": "Framer Motion. Initial { opacity: 0, y: 30 }, animate { opacity: 1, y: 0 } with transition { duration: 0.8, ease: [0.16, 1, 0.3, 1] }.",
+      "stagger": "List items (products, features, calendar slots) should stagger in.",
+      "parallax": "Hero images and large section background images should have subtle parallax scroll effects.",
+      "hover": "Images subtly scale up (scale-105) on hover with a slow transition duration (duration-700). Buttons use a sleek color fill or translation effect."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground px-8 py-4 rounded-none uppercase tracking-[0.1em] text-sm hover:bg-[#D4A870] transition-colors",
+      "secondary": "border border-border text-foreground px-8 py-4 rounded-none uppercase tracking-[0.1em] text-sm hover:bg-surface transition-colors",
+      "ghost": "text-foreground hover:text-primary transition-colors"
+    },
+    "cards": {
+      "style": "Cardless or minimal 1px border. bg-surface border border-border p-6. No heavy box-shadows.",
+      "hover": "border-white/20 transition-colors duration-300"
+    },
+    "inputs": {
+      "style": "bg-transparent border-b border-border rounded-none px-0 py-3 focus:outline-none focus:border-primary focus:ring-0 transition-colors placeholder:text-white/30"
+    },
+    "navigation": {
+      "style": "Sticky or Fixed header. Glassmorphism: backdrop-blur-xl bg-[#120D0A]/70 border-b border-white/5.",
+      "links": "text-sm uppercase tracking-wider text-white/70 hover:text-white transition-colors"
+    },
+    "scheduler": {
+      "style": "Customized Shadcn Calendar. Override styles to match the dark theme and square corners. Highlight available slots with border-primary and dim unavailable ones."
+    }
+  },
+  "media": {
+    "image_urls": [
+      {
+        "category": "hero",
+        "url": "https://images.unsplash.com/photo-1632765854612-9b02b6ec2b15?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwxfHxibGFjayUyMHdvbWFuJTIwbmF0dXJhbCUyMGhhaXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODMwMTIzNTh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Stunning portrait of a black woman with natural afro hair. Use for the main hero section with a gradient overlay."
+      },
+      {
+        "category": "services_braids",
+        "url": "https://images.unsplash.com/photo-1527203561188-dae1bc1a417f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxibGFjayUyMHdvbWFuJTIwYnJhaWRlZCUyMGhhaXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODMwMTIzNTh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Profile of a black woman with a braided ponytail against a warm background."
+      },
+      {
+        "category": "services_styling",
+        "url": "https://images.unsplash.com/photo-1592520113018-180c8bc831c9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwyfHxibGFjayUyMHdvbWFuJTIwYnJhaWRlZCUyMGhhaXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODMwMTIzNTh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Black woman with beautiful braided hair portrait."
+      },
+      {
+        "category": "interior_salon",
+        "url": "https://images.pexels.com/photos/7195799/pexels-photo-7195799.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Luxury salon interior. Use as a background for the appointment/booking section."
+      },
+      {
+        "category": "products_haircare",
+        "url": "https://images.unsplash.com/photo-1754735289896-1fa3c2d61255?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxoYWlyJTIwcHJvZHVjdHMlMjBib3R0bGV8ZW58MHx8fHwxNzgzMDEyMzU3fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Minimalist high-end hair product bottles."
+      }
+    ],
+    "image_handling": [
+      "Hero image MUST have a max overlay opacity of bg-black/50, preferably a gradient overlay (bg-gradient-to-t from-[#120D0A] via-[#120D0A]/40 to-transparent).",
+      "Images should use grayscale or sepia CSS filters on hover to match the luxurious dark aesthetic.",
+      "Use next/image or standard img tags with object-cover and w-full h-full."
+    ]
+  },
+  "testing": {
+    "attributes": [
+      "All interactive elements MUST have data-testid attributes (e.g., data-testid='book-appointment-button')."
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Build a Next.js (or React/Vite) hybrid app containing landing, shop, and booking features.",
+    "Install and setup Lenis for smooth scrolling.",
+    "Install and use Framer Motion for scroll-triggered entrance animations.",
+    "Install Phosphor Icons or Lucide-react for iconography.",
+    "Use standard Tailwind CSS classes. Apply custom fonts via Google Fonts.",
+    "Ensure 'Toyer Hair' title uses a stylish, large Cormorant Garamond font setup.",
+    "The Booking calendar should be functional visually (mock backend if needed but show time slots visually).",
+    "Products page should look like a luxury e-commerce catalog."
+  ]
+}

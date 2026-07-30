@@ -1,0 +1,60 @@
+{
+  "summary": "Verified all social/external link fixes for Toyer Hair site. Navbar top bar (IG/FB), Footer (IG/FB/TikTok), Contact page (IG/FB/TikTok/WhatsApp/Maps), Floating Action Buttons (fab-whatsapp, fab-directions, fab-call), and the Google Reviews CTA on both / and /reviews were audited for href correctness, target=_blank and rel='noopener noreferrer'. Also validated that clicking a real footer link spawns a new browser tab (context.pages increased) instead of SPA-navigating. 68/68 attribute-level assertions PASS. New-tab spawn behavior also confirmed. No issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "home_google_reviews_link": {
+      "href": "https://www.google.com/maps/search/?api=1&query=Toyer%20Hair%20Afro-Caribbean%20Beauty%20and%20wig%20Studio%20Sarnia",
+      "target": "_blank",
+      "rel": "noopener noreferrer",
+      "not_broken_si": true,
+      "not_broken_lrd": true
+    },
+    "reviews_google_reviews_link": "same as home - correct",
+    "navbar_top_bar": {
+      "instagram_href": "https://www.instagram.com/toyerr_hair",
+      "facebook_href": "https://www.facebook.com/Toyerhair",
+      "target": "_blank",
+      "rel": "noopener noreferrer"
+    },
+    "footer": {
+      "instagram": "https://www.instagram.com/toyerr_hair",
+      "facebook": "https://www.facebook.com/Toyerhair",
+      "tiktok": "https://www.tiktok.com/@toyerr_hair",
+      "all_target_blank_with_noopener_noreferrer": true
+    },
+    "contact_page": {
+      "whatsapp": "https://wa.me/15193308967",
+      "maps": "https://maps.app.goo.gl/rfJQhnTvNNE8nJGE7",
+      "instagram": "https://www.instagram.com/toyerr_hair",
+      "facebook": "https://www.facebook.com/Toyerhair",
+      "tiktok": "https://www.tiktok.com/@toyerr_hair",
+      "all_target_blank_with_noopener_noreferrer": true
+    },
+    "floating_actions": {
+      "fab-whatsapp": "https://wa.me/15193308967 (target=_blank, rel=noopener noreferrer)",
+      "fab-directions": "https://maps.app.goo.gl/rfJQhnTvNNE8nJGE7 (target=_blank, rel=noopener noreferrer)",
+      "fab-call": "tel:15193308967 (correctly no target/rel)"
+    },
+    "new_tab_click_test": "Clicked footer Instagram anchor -> context.expect_page fired, new page URL = https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftoyerr_hair&is_from_rle (Instagram redirected to login for unauthenticated visitor - destination confirmed via 'next' param). New tab opened successfully; SPA did not navigate away."
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All external anchor tags are consistently using target='_blank' with rel='noopener noreferrer' - good security practice.",
+    "BUSINESS constants in /app/frontend/src/lib/business.js are the single source of truth used by Navbar, Footer, Contact, FloatingActions and GoogleReviews - DRY compliant.",
+    "GoogleReviews.jsx correctly falls back to BUSINESS.googleReviews when the /api/google-reviews response is not from Google source, so the CTA always points to a valid URL.",
+    "Minor observation (non-blocking): Instagram will show a login gate to unauthenticated visitors regardless - not a link bug, but end users may be surprised. Consider linking to the mobile share URL or ensuring the profile is public if not already."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend only)", "frontend": "100% (68/68 assertions)"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "External link correctness verified. If future changes touch /app/frontend/src/lib/business.js or any of Navbar/Footer/Contact/FloatingActions/GoogleReviews, re-run the anchor-attribute audit (href + target + rel) across / , /reviews and /contact pages.",
+  "rca of the issue": "N/A - fixes verified working. Previously reported broken Google reviews URL (containing 'si=' or '#lrd=0x0:0x0') is no longer present anywhere. Facebook URL correctly points to /Toyerhair. All social/external links open in new tab with proper noopener+noreferrer."
+}
