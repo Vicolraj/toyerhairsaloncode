@@ -1,14 +1,14 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json yarn.lock* package-lock.json* ./
-RUN npm install
+RUN yarn install --ignore-engines
 
 COPY . .
 # We must build the React app. The .env file in this directory
 # will be picked up by craco/react-scripts automatically.
-RUN npm run build
+RUN yarn build
 
 FROM nginx:alpine
 COPY --from=builder /app/build /usr/share/nginx/html
