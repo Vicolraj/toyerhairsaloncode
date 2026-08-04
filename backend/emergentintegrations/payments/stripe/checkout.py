@@ -57,10 +57,25 @@ class StripeCheckout:
 
     async def handle_webhook(self, payload, sig_header):
         secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-        event = stripe.Webhook.construct_event(payload, sig_header, secret)
-        class EventMock:
-            def __init__(self, ev):
-                self.type = ev.type
-                self.session_id = ev.data.object.id
-                self.payment_status = ev.data.object.payment_status
-        return EventMock(event)
+        if not secret:
+            # Fallback for local testing if secret is not provided
+            event = stripe.Event.construct_from(
+                stripe.util.json.loads(payload), stripe.api_key
+            )
+            class EventMock:
+                def __init__(self, ev):
+                    self.type = ev.type
+                    self.session_id = ev.data.object.id
+                    self.payment_status = ev.data.object.payment_status
+            return EventMock(event)
+            
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, secret)
+            class EventMock:
+                def __init__(self, ev):
+                    self.type = ev.type
+                    self.session_id = ev.data.object.id
+                    self.payment_status = ev.data.object.payment_status
+            return EventMock(event)
+        except stripe.error.SignatureVerificationError as e:
+            raise ValueError("Invalid Stripe signature") from e

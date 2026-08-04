@@ -4,9 +4,10 @@ import { LogOut, CalendarCheck2, CalendarX2, ShoppingBag, DollarSign, Users, Pac
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import ImageUploader from "@/components/ImageUploader";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
-const TABS = ["Overview", "Schedule", "Appointments", "Orders", "Finance", "Products", "Customers", "Reviews", "Newsletter"];
+const TABS = ["Overview", "Schedule", "Appointments", "Orders", "Finance", "Products", "Gallery", "Customers", "Reviews", "Newsletter"];
 
 export default function AdminDashboard() {
   const { user, ready, logout } = useAuth();
@@ -21,6 +22,7 @@ export default function AdminDashboard() {
   const [subs, setSubs] = useState([]);
   const [finance, setFinance] = useState(null);
   const [expenses, setExpenses] = useState([]);
+  const [gallery, setGallery] = useState([]);
   const [schedule, setSchedule] = useState(null);
   const [schedDate, setSchedDate] = useState(todayStr());
   const [newExpense, setNewExpense] = useState({ description: "", amount: "", category: "Inventory", date: todayStr() });
@@ -35,13 +37,13 @@ export default function AdminDashboard() {
 
   const loadAll = async () => {
     try {
-      const [s, a, o, p, c, r, n, f, ex] = await Promise.all([
+      const [s, a, o, p, c, r, n, f, ex, g] = await Promise.all([
         api.get("/admin/stats"), api.get("/admin/appointments"), api.get("/admin/orders"),
         api.get("/products"), api.get("/admin/customers"), api.get("/admin/reviews"), api.get("/admin/newsletter"),
-        api.get("/admin/finance"), api.get("/admin/expenses"),
+        api.get("/admin/finance"), api.get("/admin/expenses"), api.get("/gallery"),
       ]);
       setStats(s.data); setAppts(a.data); setOrders(o.data); setProducts(p.data);
-      setCustomers(c.data); setReviews(r.data); setSubs(n.data); setFinance(f.data); setExpenses(ex.data);
+      setCustomers(c.data); setReviews(r.data); setSubs(n.data); setFinance(f.data); setExpenses(ex.data); setGallery(g.data);
     } catch (e) {
       if (e.response?.status === 401 || e.response?.status === 403) { logout(); navigate("/admin/login"); }
     } finally { setLoading(false); }
@@ -66,6 +68,8 @@ export default function AdminDashboard() {
 
   const approve = async (id) => { await api.put(`/admin/reviews/${id}`); toast.success("Approved"); loadAll(); };
   const delReview = async (id) => { await api.delete(`/admin/reviews/${id}`); toast.success("Deleted"); loadAll(); };
+  const addGallery = async (url) => { if (!url) return; try { await api.post("/admin/gallery", { category: "Uploads", url }); toast.success("Added to gallery"); loadAll(); } catch { toast.error("Could not add to gallery"); } };
+  const delGallery = async (id) => { await api.delete(`/admin/gallery/${id}`); toast.success("Deleted"); loadAll(); };
   const delProduct = async (id) => { await api.delete(`/admin/products/${id}`); toast.success("Deleted"); loadAll(); };
   const addProduct = async (e) => {
     e.preventDefault();
@@ -275,7 +279,7 @@ export default function AdminDashboard() {
               <input required placeholder="Price (CAD)" type="number" step="0.01" value={newProd.price} onChange={(e) => setNewProd({ ...newProd, price: e.target.value })} className="w-full border border-greyc rounded-xl px-3 py-2 text-sm" />
               <input placeholder="Category" value={newProd.category} onChange={(e) => setNewProd({ ...newProd, category: e.target.value })} className="w-full border border-greyc rounded-xl px-3 py-2 text-sm" />
               <input placeholder="Stock" type="number" value={newProd.stock} onChange={(e) => setNewProd({ ...newProd, stock: e.target.value })} className="w-full border border-greyc rounded-xl px-3 py-2 text-sm" />
-              <input placeholder="Image URL" value={newProd.image} onChange={(e) => setNewProd({ ...newProd, image: e.target.value })} className="w-full border border-greyc rounded-xl px-3 py-2 text-sm" />
+              <ImageUploader onUpload={(url) => setNewProd({ ...newProd, image: url })} currentImage={newProd.image} className="w-full" />
               <textarea placeholder="Description" value={newProd.description} onChange={(e) => setNewProd({ ...newProd, description: e.target.value })} className="w-full border border-greyc rounded-xl px-3 py-2 text-sm" />
               <button className="w-full bg-gold text-white py-2.5 rounded-full font-semibold">Add Product</button>
             </form>
@@ -285,6 +289,26 @@ export default function AdminDashboard() {
                   <img src={p.image} alt={p.name} className="w-14 h-14 rounded-xl object-cover" />
                   <div className="flex-1"><p className="font-semibold text-ink text-sm">{p.name}</p><p className="text-xs text-muted-foreground">{p.category} · ${p.price} · stock {p.stock}</p></div>
                   <button onClick={() => delProduct(p.id)} className="bg-red-50 text-destructive rounded-full p-2"><Trash2 size={16} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "Gallery" && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-greyc p-5">
+              <h3 className="font-semibold text-ink mb-3 flex items-center gap-2"><Plus size={16} /> Upload New Image</h3>
+              <ImageUploader onUpload={(url) => { if (url) { addGallery(url); } }} />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {gallery.map((g) => (
+                <div key={g.id} className="relative rounded-xl overflow-hidden group aspect-square border border-greyc">
+                  <img src={g.url} alt={g.category} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3">
+                    <span className="text-white text-xs font-semibold mb-2">{g.category}</span>
+                    <button onClick={() => delGallery(g.id)} className="bg-white text-destructive p-2 rounded-full hover:scale-105 transition-transform"><Trash2 size={16} /></button>
+                  </div>
                 </div>
               ))}
             </div>

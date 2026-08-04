@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Header, UploadFile, File, Form
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -14,6 +14,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
+
+import cloudinary
+import cloudinary.uploader
 
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -39,6 +42,14 @@ EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 CURRENCY = "cad"
 DEPOSIT_AMOUNT = 30.0
 resend.api_key = RESEND_API_KEY
+
+# Cloudinary configuration
+if os.environ.get('CLOUDINARY_CLOUD_NAME') and "PLACEHOLDER" not in os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+    )
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -171,6 +182,7 @@ class ProductIn(BaseModel):
     category: str
     stock: int = 0
     image: str = ""
+    images: List[str] = []
     badge: Optional[str] = ""
 
 class FavoriteReq(BaseModel):
@@ -246,111 +258,9 @@ def prod(id, cat, name, desc, price, stock, img, badge=""):
     return {"id": id, "category": cat, "name": name, "description": desc, "price": price,
             "stock": stock, "image": img, "badge": badge}
 
-PRODUCTS_SEED = [
-    prod("wig-0", "Wigs", "Premium Wig 1", "High-quality custom wig 1. 100% human hair blend.", 211, 17, "/img/products/wigs/IMG-20251125-WA0115.jpg", "Bestseller"),
-    prod("wig-1", "Wigs", "Premium Wig 2", "High-quality custom wig 2. 100% human hair blend.", 297, 7, "/img/products/wigs/IMG-20251125-WA0118.jpg", ""),
-    prod("wig-2", "Wigs", "Premium Wig 3", "High-quality custom wig 3. 100% human hair blend.", 190, 20, "/img/products/wigs/IMG-20251125-WA0092.jpg", ""),
-    prod("wig-3", "Wigs", "Premium Wig 4", "High-quality custom wig 4. 100% human hair blend.", 220, 17, "/img/products/wigs/IMG-20251125-WA0121.jpg", ""),
-    prod("wig-4", "Wigs", "Premium Wig 5", "High-quality custom wig 5. 100% human hair blend.", 270, 9, "/img/products/wigs/IMG-20251125-WA0100.jpg", ""),
-    prod("wig-5", "Wigs", "Premium Wig 6", "High-quality custom wig 6. 100% human hair blend.", 224, 20, "/img/products/wigs/IMG-20251125-WA0105.jpg", "Bestseller"),
-    prod("wig-6", "Wigs", "Premium Wig 7", "High-quality custom wig 7. 100% human hair blend.", 169, 18, "/img/products/wigs/IMG-20251125-WA0117.jpg", ""),
-    prod("wig-7", "Wigs", "Premium Wig 8", "High-quality custom wig 8. 100% human hair blend.", 270, 13, "/img/products/wigs/IMG-20251125-WA0101.jpg", ""),
-    prod("wig-8", "Wigs", "Premium Wig 9", "High-quality custom wig 9. 100% human hair blend.", 255, 8, "/img/products/wigs/IMG-20251125-WA0093.jpg", ""),
-    prod("wig-9", "Wigs", "Premium Wig 10", "High-quality custom wig 10. 100% human hair blend.", 229, 12, "/img/products/wigs/IMG-20251125-WA0102.jpg", ""),
-    prod("wig-10", "Wigs", "Premium Wig 11", "High-quality custom wig 11. 100% human hair blend.", 232, 9, "/img/products/wigs/IMG-20251125-WA0099.jpg", "Bestseller"),
-    prod("wig-11", "Wigs", "Premium Wig 12", "High-quality custom wig 12. 100% human hair blend.", 350, 7, "/img/products/wigs/IMG-20251125-WA0095.jpg", ""),
-    prod("wig-12", "Wigs", "Premium Wig 13", "High-quality custom wig 13. 100% human hair blend.", 277, 7, "/img/products/wigs/IMG-20251125-WA0112.jpg", ""),
-    prod("wig-13", "Wigs", "Premium Wig 14", "High-quality custom wig 14. 100% human hair blend.", 201, 15, "/img/products/wigs/IMG-20251125-WA0116.jpg", ""),
-    prod("wig-14", "Wigs", "Premium Wig 15", "High-quality custom wig 15. 100% human hair blend.", 154, 12, "/img/products/wigs/IMG-20251125-WA0107.jpg", ""),
-    prod("wig-15", "Wigs", "Premium Wig 16", "High-quality custom wig 16. 100% human hair blend.", 341, 6, "/img/products/wigs/IMG-20251125-WA0106.jpg", "Bestseller"),
-    prod("wig-16", "Wigs", "Premium Wig 17", "High-quality custom wig 17. 100% human hair blend.", 186, 20, "/img/products/wigs/IMG-20251125-WA0108.jpg", ""),
-    prod("wig-17", "Wigs", "Premium Wig 18", "High-quality custom wig 18. 100% human hair blend.", 338, 8, "/img/products/wigs/IMG-20251125-WA0119.jpg", ""),
-    prod("wig-18", "Wigs", "Premium Wig 19", "High-quality custom wig 19. 100% human hair blend.", 219, 19, "/img/products/wigs/IMG-20251125-WA0122.jpg", ""),
-    prod("wig-19", "Wigs", "Premium Wig 20", "High-quality custom wig 20. 100% human hair blend.", 152, 15, "/img/products/wigs/IMG-20251125-WA0097.jpg", ""),
-    prod("wig-20", "Wigs", "Premium Wig 21", "High-quality custom wig 21. 100% human hair blend.", 242, 18, "/img/products/wigs/IMG-20251125-WA0109.jpg", "Bestseller"),
-    prod("wig-21", "Wigs", "Premium Wig 22", "High-quality custom wig 22. 100% human hair blend.", 338, 6, "/img/products/wigs/IMG-20251125-WA0096.jpg", ""),
-    prod("wig-22", "Wigs", "Premium Wig 23", "High-quality custom wig 23. 100% human hair blend.", 347, 17, "/img/products/wigs/IMG-20251125-WA0125.jpg", ""),
-    prod("wig-23", "Wigs", "Premium Wig 24", "High-quality custom wig 24. 100% human hair blend.", 201, 10, "/img/products/wigs/IMG-20251125-WA0094.jpg", ""),
-    prod("wig-24", "Wigs", "Premium Wig 25", "High-quality custom wig 25. 100% human hair blend.", 235, 9, "/img/products/wigs/IMG-20251125-WA0111.jpg", ""),
-    prod("wig-25", "Wigs", "Premium Wig 26", "High-quality custom wig 26. 100% human hair blend.", 180, 18, "/img/products/wigs/IMG-20251125-WA0126.jpg", "Bestseller"),
-    prod("wig-26", "Wigs", "Premium Wig 27", "High-quality custom wig 27. 100% human hair blend.", 210, 17, "/img/products/wigs/IMG-20251125-WA0114.jpg", ""),
-    prod("wig-27", "Wigs", "Premium Wig 28", "High-quality custom wig 28. 100% human hair blend.", 213, 6, "/img/products/wigs/IMG-20251125-WA0103.jpg", ""),
-    prod("wig-28", "Wigs", "Premium Wig 29", "High-quality custom wig 29. 100% human hair blend.", 279, 9, "/img/products/wigs/IMG-20251125-WA0110.jpg", ""),
-    prod("wig-29", "Wigs", "Premium Wig 30", "High-quality custom wig 30. 100% human hair blend.", 243, 16, "/img/products/wigs/IMG-20251125-WA0124.jpg", ""),
-    prod("cosmetic-0", "Hair Care", "Cosmetic Product 1", "Nourishing hair care product 1.", 12.99, 99, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0170.jpg", "New"),
-    prod("cosmetic-1", "Hair Care", "Cosmetic Product 2", "Nourishing hair care product 2.", 12.99, 59, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0144.jpg", ""),
-    prod("cosmetic-2", "Hair Care", "Cosmetic Product 3", "Nourishing hair care product 3.", 12.99, 26, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0180.jpg", ""),
-    prod("cosmetic-3", "Hair Care", "Cosmetic Product 4", "Nourishing hair care product 4.", 12.99, 89, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0181.jpg", ""),
-    prod("cosmetic-4", "Hair Care", "Cosmetic Product 5", "Nourishing hair care product 5.", 12.99, 33, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0155.jpg", "New"),
-    prod("cosmetic-5", "Hair Care", "Cosmetic Product 6", "Nourishing hair care product 6.", 12.99, 72, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0209.jpg", ""),
-    prod("cosmetic-6", "Hair Care", "Cosmetic Product 7", "Nourishing hair care product 7.", 12.99, 76, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0138.jpg", ""),
-    prod("cosmetic-7", "Hair Care", "Cosmetic Product 8", "Nourishing hair care product 8.", 12.99, 20, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0206.jpg", ""),
-    prod("cosmetic-8", "Hair Care", "Cosmetic Product 9", "Nourishing hair care product 9.", 12.99, 51, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0148.jpg", "New"),
-    prod("cosmetic-9", "Hair Care", "Cosmetic Product 10", "Nourishing hair care product 10.", 12.99, 100, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0189.jpg", ""),
-    prod("cosmetic-10", "Hair Care", "Cosmetic Product 11", "Nourishing hair care product 11.", 12.99, 47, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0156.jpg", ""),
-    prod("cosmetic-11", "Hair Care", "Cosmetic Product 12", "Nourishing hair care product 12.", 12.99, 37, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0183.jpg", ""),
-    prod("cosmetic-12", "Hair Care", "Cosmetic Product 13", "Nourishing hair care product 13.", 12.99, 40, "/img/products/haircair_solution_and_creams/IMG-20250930-WA0000(1).jpg", "New"),
-    prod("cosmetic-13", "Hair Care", "Cosmetic Product 14", "Nourishing hair care product 14.", 12.99, 96, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0177.jpg", ""),
-    prod("cosmetic-14", "Hair Care", "Cosmetic Product 15", "Nourishing hair care product 15.", 12.99, 85, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0151.jpg", ""),
-    prod("cosmetic-15", "Hair Care", "Cosmetic Product 16", "Nourishing hair care product 16.", 12.99, 24, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0132.jpg", ""),
-    prod("cosmetic-16", "Hair Care", "Cosmetic Product 17", "Nourishing hair care product 17.", 12.99, 21, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0150.jpg", "New"),
-    prod("cosmetic-17", "Hair Care", "Cosmetic Product 18", "Nourishing hair care product 18.", 12.99, 84, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0131.jpg", ""),
-    prod("cosmetic-18", "Hair Care", "Cosmetic Product 19", "Nourishing hair care product 19.", 12.99, 41, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0153.jpg", ""),
-    prod("cosmetic-19", "Hair Care", "Cosmetic Product 20", "Nourishing hair care product 20.", 12.99, 89, "/img/products/haircair_solution_and_creams/IMG-20251125-WA0140.jpg", ""),
-]
+PRODUCTS_SEED = []
 
-GALLERY_SEED = [
-    ("Kids", "/img/Hair style/IMG-20251125-WA0020.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0066.jpg"),
-    ("Locs", "/img/Hair style/IMG-20251125-WA0023.jpg"),
-    ("Products", "/img/Hair style/IMG-20251125-WA0041.jpg"),
-    ("Locs", "/img/Hair style/IMG-20251125-WA0090.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0053.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0065.jpg"),
-    ("Wigs", "/img/Hair style/IMG-20251125-WA0064.jpg"),
-    ("Wigs", "/img/Hair style/IMG-20251125-WA0044.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0032.jpg"),
-    ("Natural Hair", "/img/Hair style/IMG-20251125-WA0035.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20251125-WA0031.jpg"),
-    ("Kids", "/img/Hair style/IMG-20251125-WA0084.jpg"),
-    ("Natural Hair", "/img/Hair style/IMG-20251125-WA0068.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20250417-WA0002.jpg"),
-    ("Locs", "/img/Hair style/IMG-20251125-WA0025.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20251125-WA0046.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0049.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20251125-WA0072.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0019.jpg"),
-    ("Products", "/img/Hair style/IMG-20251125-WA0026.jpg"),
-    ("Locs", "/img/Hair style/IMG-20251125-WA0086.jpg"),
-    ("Wigs", "/img/Hair style/IMG-20251125-WA0028.jpg"),
-    ("Cornrows", "/img/Hair style/IMG-20251125-WA0059.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0062.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20251125-WA0058.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0089.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0079.jpg"),
-    ("Kids", "/img/Hair style/IMG-20251123-WA0005.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0078.jpg"),
-    ("Kids", "/img/Hair style/IMG-20251125-WA0040.jpg"),
-    ("Kids", "/img/Hair style/IMG-20251125-WA0067.jpg"),
-    ("Cornrows", "/img/Hair style/IMG-20251125-WA0050.jpg"),
-    ("Natural Hair", "/img/Hair style/IMG-20251125-WA0024.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0147.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0029.jpg"),
-    ("Products", "/img/Hair style/IMG-20250417-WA0039.jpg"),
-    ("Kids", "/img/Hair style/IMG-20251125-WA0211.jpg"),
-    ("Knotless", "/img/Hair style/IMG-20251125-WA0088.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0018.jpg"),
-    ("Locs", "/img/Hair style/IMG-20251125-WA0063.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0073.jpg"),
-    ("Natural Hair", "/img/Hair style/IMG-20251125-WA0042.jpg"),
-    ("Boho", "/img/Hair style/IMG-20251125-WA0077.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0210.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0075.jpg"),
-    ("Cornrows", "/img/Hair style/IMG-20251125-WA0061.jpg"),
-    ("Wigs", "/img/Hair style/IMG-20251125-WA0038.jpg"),
-    ("Salon", "/img/Hair style/IMG-20251125-WA0034.jpg"),
-    ("Braids", "/img/Hair style/IMG-20251125-WA0080.jpg"),
-]
+GALLERY_SEED = []
 
 REVIEWS_SEED = [
     {"name": "Amara O.", "rating": 5, "service": "Knotless Braids", "text": "My knotless braids lasted 8 weeks and looked flawless. Best salon in Sarnia!", "source": "Google"},
@@ -792,6 +702,37 @@ async def delete_product(pid: str, admin: dict = Depends(get_current_admin)):
 @api_router.get("/admin/newsletter")
 async def admin_newsletter(admin: dict = Depends(get_current_admin)):
     return await db.newsletter.find({}, {"_id": 0}).to_list(2000)
+
+@api_router.post("/images/upload")
+async def upload_image(file: UploadFile = File(...), admin: dict = Depends(get_current_admin)):
+    if not os.environ.get('CLOUDINARY_CLOUD_NAME') or "PLACEHOLDER" in os.environ.get('CLOUDINARY_CLOUD_NAME'):
+        # Mock upload for development
+        return {"url": "https://images.unsplash.com/photo-1592520113018-180c8bc831c9?auto=format&fit=crop&w=800"}
+    
+    try:
+        content = await file.read()
+        res = await asyncio.to_thread(
+            cloudinary.uploader.unsigned_upload, content, "toyerhair"
+        )
+        return {"url": res["secure_url"]}
+    except Exception as e:
+        logger.error(f"Image upload failed: {e}")
+        raise HTTPException(500, "Image upload failed")
+
+class GalleryReq(BaseModel):
+    category: str
+    url: str
+
+@api_router.post("/admin/gallery")
+async def add_gallery_image(g: GalleryReq, admin: dict = Depends(get_current_admin)):
+    doc = {"id": str(uuid.uuid4()), "category": g.category, "url": g.url}
+    await db.gallery.insert_one(doc)
+    return {"message": "Added to gallery", "id": doc["id"]}
+
+@api_router.delete("/admin/gallery/{gid}")
+async def delete_gallery_image(gid: str, admin: dict = Depends(get_current_admin)):
+    await db.gallery.delete_one({"id": gid})
+    return {"message": "Deleted from gallery"}
 
 
 # ---------------- Admin: Finances ----------------
