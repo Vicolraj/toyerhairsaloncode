@@ -829,9 +829,9 @@ async def startup():
         await db.products.update_one({"id": p["id"]}, {"$set": p}, upsert=True)
     for pr in PROMOS_SEED:
         await db.promotions.update_one({"id": pr["id"]}, {"$set": pr}, upsert=True)
-    if await db.gallery.count_documents({}) == 0:
+    if not await db.gallery.find_one() and GALLERY_SEED:
         await db.gallery.insert_many([{"id": str(uuid.uuid4()), "category": c, "url": u} for c, u in GALLERY_SEED])
-    if await db.reviews.count_documents({}) == 0:
+    if not await db.reviews.find_one() and REVIEWS_SEED:
         await db.reviews.insert_many([{"id": str(uuid.uuid4()), **r, "approved": True,
                                        "created_at": datetime.now(timezone.utc).isoformat()} for r in REVIEWS_SEED])
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@toyerhair.com").lower()
