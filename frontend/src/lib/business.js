@@ -15,7 +15,7 @@ export const BUSINESS = {
   facebookAlt: "https://www.facebook.com/share/19e9sZ6v73/",
   instagram: "https://www.instagram.com/toyerr_hair",
   tiktok: "https://www.tiktok.com/@toyerr_hair",
-  whatsapp: "https://wa.me/15193308967",
+  whatsapp: "https://api.whatsapp.com/send/?phone=15193308967",
   googleReviews: "https://maps.app.goo.gl/TNuExF7dWTrMZdV58",
   googleRating: 4.8,
   googleTotal: 27,

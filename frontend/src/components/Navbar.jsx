@@ -1,20 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingBag, Menu, X, User, ChevronDown, Instagram, Facebook, Phone } from "lucide-react";
+import { ShoppingBag, Menu, X, User, ChevronDown, Instagram, Facebook, Phone, Music2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { BUSINESS, NAV_SERVICES, NAV_SHOP } from "@/lib/business";
 
-const Logo = () => (
-  <Link to="/" data-testid="nav-logo" className="flex flex-col leading-none">
-    <span className="font-heading text-2xl font-semibold tracking-tight text-ink">
-      TOYER <span className="text-gold-gradient">HAIR</span>
-    </span>
-    <span className="text-[8px] uppercase tracking-[0.28em] mt-1 text-muted-foreground">
-      Afro-Caribbean Beauty & Wig Studio
-    </span>
-  </Link>
-);
+const Logo = () => {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <Link to="/" data-testid="nav-logo" className="flex items-center gap-2 leading-none">
+      {!imgError ? (
+        <img
+          src="/logo.png"
+          alt="Toyer Hair Logo"
+          className="h-10 w-auto object-contain"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="flex flex-col leading-none">
+          <span className="font-heading text-2xl font-semibold tracking-tight text-ink">
+            TOYER <span className="text-gold-gradient">HAIR</span>
+          </span>
+          <span className="text-[8px] uppercase tracking-[0.28em] mt-1 text-muted-foreground">
+            Afro-Caribbean Beauty &amp; Wig Studio
+          </span>
+        </div>
+      )}
+    </Link>
+  );
+};
 
 export const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -40,6 +54,7 @@ export const Navbar = () => {
             <a href={`tel:${BUSINESS.phoneRaw}`} className="hover:text-gold flex items-center gap-1"><Phone size={12} /> {BUSINESS.phone}</a>
             <a href={BUSINESS.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-gold"><Instagram size={14} /></a>
             <a href={BUSINESS.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-gold"><Facebook size={14} /></a>
+            <a href={BUSINESS.tiktok} target="_blank" rel="noopener noreferrer" className="hover:text-gold"><Music2 size={14} /></a>
           </div>
         </div>
       </div>
